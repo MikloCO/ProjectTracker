@@ -1,0 +1,41 @@
+# ruff.toml
+
+# Python version
+target-version = "py311"
+
+# Line length (Black-compatible but slightly stricter)
+line-length = 88
+
+# Enable useful rule sets
+lint.select = [
+    "E",   # pycodestyle (errors)
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # import sorting
+    "N",   # naming conventions
+    "UP",  # pyupgrade (modern Python)
+    "B",   # bugbear (very useful)
+    "C4",  # comprehensions
+    "SIM", # simplifications
+    "RUF", # Ruff-specific rules
+]
+
+# Ignore rules that are annoying or not worth it
+lint.ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # function calls in defaults (fine in many cases)
+]
+
+# Auto-fix on safe issues
+fix = true
+
+# Import sorting config
+[lint.isort]
+known-first-party = ["app"]
+combine-as-imports = true
+
+# Formatting (replaces black)
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
