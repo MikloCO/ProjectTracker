@@ -1,7 +1,7 @@
 # ruff.toml
 
 # Python version
-target-version = "py311"
+target-version = "py313"
 
 # Line length (Black-compatible but slightly stricter)
 line-length = 88
