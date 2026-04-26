@@ -87,6 +87,11 @@ class CourseManager(QObject):
         self.add_course(new_course)
         save_courses(self.courses)
 
+    def active_count(self, exclude_id: int | None = None) -> int:
+        return sum(
+            1 for c in self.courses if c.status == "in_progress" and c.id != exclude_id
+        )
+
     def update_status(self, course_id: int, status: str):
         """
         Update the status of a course and persist the change.

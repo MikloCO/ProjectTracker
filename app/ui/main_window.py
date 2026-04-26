@@ -1,5 +1,6 @@
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
+    QApplication,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -17,6 +18,7 @@ from app.ui.pages.archive import ArchivePage
 from app.ui.pages.browse import BrowsePage
 from app.ui.pages.current import CurrentPage
 from app.ui.pages.overview import OverviewPage
+from app.ui.theme import THEMES, load_theme, save_theme
 
 
 class MainWindow(QMainWindow):
@@ -64,9 +66,13 @@ class MainWindow(QMainWindow):
 
         # Settings menu
         settings_menu = menu.addMenu("&Settings")
-        settings_menu.addAction(
-            "Edit color theme", lambda: self.on_settings("Edit color theme")
-        )
+
+        theme_menu = settings_menu.addMenu("Color theme")
+        for name in THEMES:
+            action = QAction(name.capitalize(), self)
+            action.triggered.connect(lambda _, t=name: self.apply_theme(t))
+            theme_menu.addAction(action)
+
         settings_menu.addAction(
             "Edit courses", lambda: self.on_settings("Edit courses")
         )
@@ -113,6 +119,10 @@ class MainWindow(QMainWindow):
             dialog = AddCourseDialog(self, manager=self.manager, course=course)
             if dialog.exec():
                 self.refresh_all()
+
+    def apply_theme(self, theme: str) -> None:
+        QApplication.instance().setStyleSheet(load_theme(theme))
+        save_theme(theme)
 
     def refresh_all(self):
         self.overview_page.refresh_courses()

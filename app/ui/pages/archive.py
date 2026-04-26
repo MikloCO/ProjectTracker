@@ -75,7 +75,7 @@ class ArchivePage(QWidget):
                 row = i // 3
                 col = i % 3
 
-                widget = CourseWidget(course)
+                widget = CourseWidget(course, manager=self.manager)
                 grid.addWidget(widget, row, col)
                 widget.button.clicked.connect(
                     lambda _, c=course: self.open_course_detail(c)

@@ -87,13 +87,7 @@ class CourseWidget(QWidget):
         self.update_progressbar()
 
         # Clean style for course buttons
-        self.button.setStyleSheet("""
-            QPushButton {
-                padding: 0px;
-                margin: 0px;
-                border: none;
-            }
-        """)
+        self.button.setObjectName("course_button")
 
     def update_progressbar(self):
         # Calculate and display progress
@@ -112,12 +106,7 @@ class CourseWidget(QWidget):
         self.button.setStatusTip("Add a new course")
         self.progress_bar.setValue(0)
         self.progress_bar.setVisible(False)
-        self.button.setStyleSheet("""
-                                  QPushButton {
-                                      background-color: #f0f0f0;
-                                      border: 2px dashed #ccc;
-                                  }
-                                  """)
+        self.button.setObjectName("empty_slot_button")
 
         # Set fixed width for the widget
         self.setFixedWidth(200)

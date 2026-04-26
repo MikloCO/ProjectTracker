@@ -1,6 +1,7 @@
 site_name: Project Tracker
 site_description: Track progress across multiple courses
 site_author: Olivia Mikler
+site_url: https://mikloco.github.io/ProjectTracker/
 
 theme:
   name: material

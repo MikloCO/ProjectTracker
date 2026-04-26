@@ -7,6 +7,8 @@ import qtawesome as qta
 from PySide6.QtGui import QFont, Qt, QTextListFormat
 from PySide6.QtWidgets import QTextEdit, QToolBar, QVBoxLayout, QWidget
 
+from app.ui.theme import get_saved_theme
+
 # WORKBOOK_FILE = Path.home() / ".course_tracker" / "workbook.html"
 
 
@@ -38,28 +40,34 @@ class WorkbookWidget(QWidget):
 
         self.toolbar.toggleViewAction().setEnabled(False)
 
-        bold_action = self.toolbar.addAction(qta.icon("fa5s.bold"), "Bold")
+        ic = "#333333" if get_saved_theme() == "light" else "#cccccc"
+
+        bold_action = self.toolbar.addAction(qta.icon("fa5s.bold", color=ic), "Bold")
         bold_action.triggered.connect(self.format_bold)
-        italic_action = self.toolbar.addAction(qta.icon("fa5s.italic"), "Italic")
+        italic_action = self.toolbar.addAction(
+            qta.icon("fa5s.italic", color=ic), "Italic"
+        )
         italic_action.triggered.connect(self.format_italic)
         underline_action = self.toolbar.addAction(
-            qta.icon("fa5s.underline"), "Underline"
+            qta.icon("fa5s.underline", color=ic), "Underline"
         )
         underline_action.triggered.connect(self.format_underline)
         self.toolbar.addSeparator()
-        bullet_action = self.toolbar.addAction(qta.icon("fa5s.list-ul"), "Bullet List")
+        bullet_action = self.toolbar.addAction(
+            qta.icon("fa5s.list-ul", color=ic), "Bullet List"
+        )
         bullet_action.triggered.connect(self.insert_bullet_list)
         numbered_action = self.toolbar.addAction(
-            qta.icon("fa5s.list-ol"), "Numbered List"
+            qta.icon("fa5s.list-ol", color=ic), "Numbered List"
         )
         numbered_action.triggered.connect(self.insert_numbered_list)
         self.toolbar.addSeparator()
-        undo_action = self.toolbar.addAction(qta.icon("fa5s.undo"), "Undo")
+        undo_action = self.toolbar.addAction(qta.icon("fa5s.undo", color=ic), "Undo")
         undo_action.triggered.connect(self.editor.undo)
-        redo_action = self.toolbar.addAction(qta.icon("fa5s.redo"), "Redo")
+        redo_action = self.toolbar.addAction(qta.icon("fa5s.redo", color=ic), "Redo")
         redo_action.triggered.connect(self.editor.redo)
         clear_action = self.toolbar.addAction(
-            qta.icon("fa5s.eraser"), "Clear Formatting"
+            qta.icon("fa5s.eraser", color=ic), "Clear Formatting"
         )
         clear_action.triggered.connect(self.clear_formatting)
 

@@ -20,3 +20,11 @@ You can now: remember which total amount of courses you have, where on your mach
 and which website things are on.
 
 
+## How
+
+Built with Pyside6
+
+## Screenshots
+
+![browse section](docs/main_page.png)
+![workbook](docs/workbook.png)

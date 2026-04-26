@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -61,11 +62,6 @@ class CurrentPage(QWidget):
         self.splitter.setStretchFactor(2, 2)
 
         self.splitter.setHandleWidth(6)
-        self.splitter.setStyleSheet("""
-        QSplitter::handle {
-            background-color: #aaa;
-        }
-        """)
 
         self.main_layout.addWidget(self.splitter)
 
@@ -164,6 +160,21 @@ class CurrentPage(QWidget):
             QDesktopServices.openUrl(QUrl.fromLocalFile(self.course.project_path))
 
     def text_changed(self, status):
+        if (
+            status == "in_progress"
+            and self.manager.active_count(exclude_id=self.course.id)
+            >= self.manager.max_active
+        ):
+            QMessageBox.warning(
+                self,
+                "Too many active courses",
+                f"You already have {self.manager.max_active} courses in progress.\nFinish or remove one before starting another.",
+            )
+            combo = self.sender()
+            combo.blockSignals(True)
+            combo.setCurrentText(self.course.status)
+            combo.blockSignals(False)
+            return
         self.course.status = status
         self.manager.update_status(self.course.id, status)
         self.window().refresh_all()

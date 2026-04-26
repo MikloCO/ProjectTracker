@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QSpinBox,
 )
@@ -137,6 +138,19 @@ class AddCourseDialog(QDialog):
 
         if banner == "No image selected":
             return
+
+        if status == "in_progress":
+            exclude_id = self.course.id if self.edit_mode else None
+            if (
+                self.manager.active_count(exclude_id=exclude_id)
+                >= self.manager.max_active
+            ):
+                QMessageBox.warning(
+                    self,
+                    "Too many active courses",
+                    f"You already have {self.manager.max_active} courses in progress.\nFinish or remove one before starting another.",
+                )
+                return
 
         project_path = self.project_path.text() or None
 

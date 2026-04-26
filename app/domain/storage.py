@@ -12,7 +12,6 @@ DATA_FILE = Path("data/courses.json")
 def save_courses(courses: list[Course]):
     """Serialize all courses to the JSON data file, creating it if needed."""
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    print("SAVE PATH:", DATA_FILE.resolve())
 
     try:
         with open(DATA_FILE, "w", encoding="utf-8") as f:

@@ -79,7 +79,7 @@ class BrowsePage(QWidget):
                 row = i // 3
                 col = i % 3
 
-                course_widget = CourseWidget(course)  # your existing widget
+                course_widget = CourseWidget(course, manager=self.manager)
                 grid.addWidget(course_widget, row, col)
                 course_widget.button.clicked.connect(
                     lambda _, c=course: self.open_course_detail(c)
