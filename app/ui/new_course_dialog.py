@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -12,12 +13,16 @@ from PySide6.QtWidgets import (
 
 
 class AddCourseDialog(QDialog):
-    def __init__(self, parent=None, manager=None):
+    """Dialog for creating or editing a course. Pass `course` to enter edit mode."""
+
+    def __init__(self, parent=None, manager=None, course=None):
         super().__init__(parent)
 
         self.manager = manager
+        self.course = course
+        self.edit_mode = course is not None
 
-        self.setWindowTitle("Add Course")
+        self.setWindowTitle("Edit Course" if self.edit_mode else "Add Course")
         self.setGeometry(100, 100, 400, 400)
 
         layout = QFormLayout(self)
@@ -26,6 +31,8 @@ class AddCourseDialog(QDialog):
         self.title_input = QLineEdit()
         self.provider_input = QLineEdit()
         self.link_input = QLineEdit()
+        self.in_progress = QCheckBox()
+        self.project_path = QLineEdit()
 
         self.chapters_input = QSpinBox()
         self.chapters_input.setMinimum(1)
@@ -64,13 +71,36 @@ class AddCourseDialog(QDialog):
         layout.addRow("Number of Chapters:", self.chapters_input)
         layout.addRow("Banner Image:", banner_layout)
         layout.addRow("Category:", category_layout)
-
+        layout.addRow("Project Path (locally):", self.project_path)
+        layout.addRow("In Progress:", self.in_progress)
         # Buttons
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.handle_accept)
         button_box.rejected.connect(self.reject)
 
         layout.addRow(button_box)
+
+        if self.edit_mode:
+            self._prefill()
+
+    def _prefill(self):
+        c = self.course
+        self.title_input.setText(c.title)
+        self.provider_input.setText(c.provider)
+        self.link_input.setText(c.link or "")
+        self.chapters_input.setValue(len(c.chapters))
+        self.banner_path.setText(c.banner_path or "")
+        self.in_progress.setChecked(c.status == "in_progress")
+
+        self.project_path.setText(c.project_path or "")
+
+        known = ["art", "programming", "ai"]
+        if c.category in known:
+            self.category_combo.setCurrentText(c.category)
+        elif c.category:
+            self.category_combo.setCurrentText("new")
+            self.category_custom.setText(c.category)
+            self.category_custom.setVisible(True)
 
     def on_category_changed(self, text):
         """Show custom input field when 'new' is selected"""
@@ -92,6 +122,7 @@ class AddCourseDialog(QDialog):
         link = self.link_input.text()
         num_chapters = self.chapters_input.value()
         banner = self.banner_path.text()
+        status = "in_progress" if self.in_progress.isChecked() else "todo"
 
         # Get category
         category = self.category_combo.currentText()
@@ -107,8 +138,30 @@ class AddCourseDialog(QDialog):
         if banner == "No image selected":
             return
 
-        self.manager.create_and_save_course(
-            title, provider, link, num_chapters, banner, category
-        )
+        project_path = self.project_path.text() or None
+
+        if self.edit_mode:
+            self.manager.update_course(
+                self.course.id,
+                title,
+                provider,
+                link,
+                num_chapters,
+                banner,
+                category,
+                status,
+                project_path,
+            )
+        else:
+            self.manager.create_and_save_course(
+                title,
+                provider,
+                link,
+                num_chapters,
+                banner,
+                category,
+                status,
+                project_path,
+            )
 
         self.accept()

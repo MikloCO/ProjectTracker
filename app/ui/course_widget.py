@@ -1,15 +1,20 @@
 import qtawesome as qta
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon, QPixmap, Qt
 from PySide6.QtWidgets import QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
+from app.domain.manager import CourseManager
+from app.domain.models import Course
 from app.ui.new_course_dialog import AddCourseDialog
 
 
 class CourseWidget(QWidget):
+    """Card widget displaying a course banner, title, and progress bar."""
+
     def __init__(self, course=None, manager=None):
         super().__init__()
-        self.course = course
-        self.manager = manager
+        self.course: Course = course
+        self.manager: CourseManager = manager
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -24,6 +29,11 @@ class CourseWidget(QWidget):
         self.button.setFixedSize(200, 150)
 
         self.title_label = QLabel()
+        self.title_label.setFixedHeight(40)
+        self.title_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        if self.manager:
+            self.manager.course_updated.connect(self.on_course_updated)
 
         # Progress bar
         self.progress_bar = QProgressBar()
@@ -40,6 +50,15 @@ class CourseWidget(QWidget):
             self.setup_empty()
 
         self.layout.addLayout(self.card)
+        self.setFixedHeight(220)
+        self.on_course_updated(self.course.id)
+
+    def on_course_updated(self, course_id):
+        if not self.course:
+            return
+
+        if self.course.id == course_id:
+            self.update_progressbar()
 
     def setup_course(self):
         if self.course.banner_path:
@@ -48,8 +67,14 @@ class CourseWidget(QWidget):
 
             # Check if pixmap loaded successfully
             if not pixmap.isNull():
-                self.button.setIcon(QIcon(pixmap))
-                self.button.setIconSize(self.button.size())
+                w, h = self.button.width(), self.button.height()
+                scaled = pixmap.scaled(
+                    w, h, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
+                )
+                x = (scaled.width() - w) // 2
+                y = (scaled.height() - h) // 2
+                self.button.setIcon(QIcon(scaled.copy(x, y, w, h)))
+                self.button.setIconSize(QSize(w, h))
             else:
                 # If image failed to load, show a placeholder
                 self.button.setIcon(qta.icon("fa6s.image"))
@@ -59,14 +84,7 @@ class CourseWidget(QWidget):
         if self.title_label:
             self.title_label.setWordWrap(True)
 
-        # Calculate and display progress
-        if self.course.chapters:
-            completed = sum(1 for ch in self.course.chapters if ch.completed)
-            total = len(self.course.chapters)
-            progress_percent = int((completed / total) * 100)
-            self.progress_bar.setValue(progress_percent)
-        else:
-            self.progress_bar.setValue(0)
+        self.update_progressbar()
 
         # Clean style for course buttons
         self.button.setStyleSheet("""
@@ -76,6 +94,16 @@ class CourseWidget(QWidget):
                 border: none;
             }
         """)
+
+    def update_progressbar(self):
+        # Calculate and display progress
+        if self.course.chapters:
+            completed = sum(1 for ch in self.course.chapters if ch.completed)
+            total = len(self.course.chapters)
+            progress_percent = int((completed / total) * 100)
+            self.progress_bar.setValue(progress_percent)
+        else:
+            self.progress_bar.setValue(0)
 
     def setup_empty(self):
         self.title_label.setText("Empty slot")
@@ -97,3 +125,12 @@ class CourseWidget(QWidget):
     def open_add_course_dialog(self):
         dialog = AddCourseDialog(self, manager=self.manager)
         dialog.exec()
+
+    def update_progress(self):
+        if self.course.chapters:
+            completed = sum(1 for ch in self.course.chapters if ch.completed)
+            total = len(self.course.chapters)
+            progress_percent = int((completed / total) * 100)
+            self.progress_bar.setValue(progress_percent)
+        else:
+            self.progress_bar.setValue(0)

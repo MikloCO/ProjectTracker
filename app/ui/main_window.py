@@ -1,91 +1,120 @@
-import sys
-
-import qtawesome as qta
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
-    QApplication,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QMainWindow,
     QPushButton,
+    QStackedWidget,
+    QToolBar,
     QVBoxLayout,
     QWidget,
 )
 
 from app.domain.manager import CourseManager
-from app.domain.storage import load_courses
-from app.ui.course_widget import CourseWidget
 from app.ui.new_course_dialog import AddCourseDialog
-from app.ui.workbook import WorkbookWidget
+from app.ui.pages.archive import ArchivePage
+from app.ui.pages.browse import BrowsePage
+from app.ui.pages.current import CurrentPage
+from app.ui.pages.overview import OverviewPage
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    """Root application window with a stacked page layout and toolbar navigation."""
+
+    def __init__(self, manager: CourseManager):
         super().__init__()
         self.setWindowTitle("Project Tracker")
         self.setMinimumSize(800, 400)
 
-        # Load courses from JSON storage
-        courses = load_courses()
-        self.manager = CourseManager(courses)
+        self.manager = manager
         self.setup_ui()
 
     def setup_ui(self):
-        central_widget = QWidget()
-        self.main_layout = QVBoxLayout(central_widget)
+        self.stack = QStackedWidget()
 
-        # Title with icon
-        title_layout = QHBoxLayout()
-        title_label = QLabel("In progress")
-        title_layout.addWidget(title_label)
+        self.overview_page = OverviewPage(self.manager, parent=self)
+        self.browse_page = BrowsePage(self.manager, parent=self)
+        self.archived_page = ArchivePage(self.manager, parent=self)
+        self.current_page = CurrentPage(self.manager, parent=self)
 
-        # Add single plus button to add new course
-        add_button = QPushButton()
-        add_button.setIcon(qta.icon("fa5s.plus", color="black", scale_factor=1.5))
-        add_button.setMaximumWidth(60)
-        add_button.clicked.connect(self.open_add_course_dialog)
-        title_layout.addWidget(add_button)
+        self.stack.addWidget(self.overview_page)
+        self.stack.addWidget(self.browse_page)
+        self.stack.addWidget(self.archived_page)
+        self.stack.addWidget(self.current_page)
 
-        title_layout.addStretch()
-        self.main_layout.addLayout(title_layout)
+        toolbar = QToolBar("Navigation")
+        self.addToolBar(toolbar)
 
-        self.refresh_courses()
+        layout = QHBoxLayout()
 
-        self.workbook = WorkbookWidget()
-        self.main_layout.addWidget(self.workbook)
-        self.setCentralWidget(central_widget)
+        toolbar.addAction(self.make_action("Overview", 0))
+        toolbar.addAction(self.make_action("Browse", 1))
+        toolbar.addAction(self.make_action("Archived", 2))
 
-    def refresh_courses(self):
-        """Refresh the course display"""
-        # Remove old course row if it exists
-        if hasattr(self, "course_row_widget") and self.course_row_widget:
-            self.main_layout.removeWidget(self.course_row_widget)
-            self.course_row_widget.deleteLater()
+        layout.addWidget(self.stack)
 
-        # Reload courses from storage
-        courses = load_courses()
-        self.manager.courses = courses
+        # File menu
+        menu = self.menuBar()
 
-        # Create new course row container
-        self.course_row_widget = QWidget()
-        course_row = QHBoxLayout(self.course_row_widget)
-        course_row.setContentsMargins(0, 0, 0, 0)
+        file_menu = menu.addMenu("&New")
+        add_action = QAction("Add new course", self)
+        add_action.triggered.connect(self.open_add_course_dialog)
+        file_menu.addAction(add_action)
 
-        # Add loaded courses
-        for course in self.manager.courses:
-            course_row.addWidget(CourseWidget(course, manager=self.manager))
+        # Settings menu
+        settings_menu = menu.addMenu("&Settings")
+        settings_menu.addAction(
+            "Edit color theme", lambda: self.on_settings("Edit color theme")
+        )
+        settings_menu.addAction(
+            "Edit courses", lambda: self.on_settings("Edit courses")
+        )
 
-        course_row.addStretch()
+        container = QWidget()
+        container.setLayout(layout)
 
-        # Insert before workbook
-        self.main_layout.insertWidget(1, self.course_row_widget)
+        self.setCentralWidget(container)
+
+    def make_action(self, name, index):
+        action = QAction(name, self)
+        action.triggered.connect(lambda: self.stack.setCurrentIndex(index))
+        return action
+
+    def make_page(self, text):
+        page = QWidget()
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(text))
+        page.setLayout(layout)
+        return page
+
+    def make_nav_button(self, text, index):
+        btn = QPushButton(text)
+        btn.clicked.connect(lambda: self.stack.setCurrentIndex(index))
+        return btn
 
     def open_add_course_dialog(self):
         dialog = AddCourseDialog(self, manager=self.manager)
         if dialog.exec():
-            self.refresh_courses()
+            self.refresh_all()
 
+    def on_settings(self, action: str):
+        if action == "Edit courses":
+            courses = self.manager.courses
+            if not courses:
+                return
+            names = [c.title for c in courses]
+            name, ok = QInputDialog.getItem(
+                self, "Edit Course", "Select a course:", names, editable=False
+            )
+            if not ok:
+                return
+            course = next(c for c in courses if c.title == name)
+            dialog = AddCourseDialog(self, manager=self.manager, course=course)
+            if dialog.exec():
+                self.refresh_all()
 
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+    def refresh_all(self):
+        self.overview_page.refresh_courses()
+        self.browse_page.populate_courses()
+        self.archived_page.populate_courses()

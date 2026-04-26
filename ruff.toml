@@ -24,6 +24,7 @@ lint.select = [
 lint.ignore = [
     "E501",   # line too long (handled by formatter)
     "B008",   # function calls in defaults (fine in many cases)
+    "N802",   # Qt overrides require camelCase names (resizeEvent, mousePressEvent, etc.)
 ]
 
 # Auto-fix on safe issues
